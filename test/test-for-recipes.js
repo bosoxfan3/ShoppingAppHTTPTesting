@@ -28,7 +28,7 @@ if (require.main === module) {
   runServer().catch(err => console.error(err));
 };
 
-describe.only('Recipes', function() {
+describe('Recipes', function() {
     it('should list items on GET', function() {
     return chai.request(app)
       .get('/recipes')
@@ -66,3 +66,39 @@ it('should add an item on POST', function() {
       res.body.should.deep.equal(Object.assign(newItem, {id: res.body.id}));
     });
 });
+
+it('should update items on PUT', function() {
+    const updateData = {
+      name: 'foo',
+      ingredients: ['bacon', 'lettuce', 'tomato']
+    };
+    return chai.request(app)
+      // first have to get so we have an idea of object to update
+      .get('/recipes')
+      .then(function(res) {
+        updateData.id = res.body[0].id;
+        return chai.request(app)
+          .put(`/recipes/${updateData.id}`)
+          .send(updateData)
+      })
+      .then(function(res) {
+        res.should.have.status(200);
+        res.should.be.json;
+        res.body.should.be.a('object');
+        res.body.should.deep.equal(updateData);
+      });
+  });
+
+  it('should delete items on DELETE', function() {
+    return chai.request(app)
+      // first have to get so we have an `id` of item
+      // to delete
+      .get('/recipes')
+      .then(function(res) {
+        return chai.request(app)
+          .delete(`/recipes/${res.body[0].id}`);
+      })
+      .then(function(res) {
+        res.should.have.status(204);
+      });
+  });
